@@ -9,24 +9,51 @@ public class PhysicsEngine : MonoBehaviour
     public float mass;             // [kg]
 
     private List<Vector3> forceVectorList = new List<Vector3>();
+    private PhysicsEngine[] physicsEngineArray;
+
+    private const float bigG = 6.673e-11f; //[m^3 s^-2 kg^-1]
 
     // Start is called before the first frame update
     void Start()
     {   
         SetupThrustTrails();
+        physicsEngineArray = GameObject.FindObjectsOfType<PhysicsEngine>();
     }
 
     void FixedUpdate()
     {
         RenderTrails();
+        CalculateGravity();
         UpdatePosition();
     }
 
     public void AddForce(Vector3 forceVector)
     {
         forceVectorList.Add(forceVector);
+        Debug.Log("Adding force" + forceVector + "to" + gameObject.name);
     }
 
+    void CalculateGravity()
+    {
+        foreach (PhysicsEngine physicsEngineA in physicsEngineArray)
+        {
+            
+            {
+                foreach (PhysicsEngine physicsEngineB in physicsEngineArray)
+                {
+                    if (physicsEngineA != physicsEngineB && physicsEngineA != this)
+                        Debug.Log("Calculating gravitational force exerted on" + physicsEngineA.name + "due to the gravity of" + physicsEngineB.name);
+
+                    Vector3 offset = physicsEngineA.transform.position - physicsEngineB.transform.position;
+                    float rSquared = Mathf.Pow(offset.magnitude, 2f);
+                    float gravityMagnitude = bigG * physicsEngineA.mass * physicsEngineB.mass / rSquared;
+                    Vector3 gravityFeltVector = gravityMagnitude * offset.normalized;
+
+                    physicsEngineA.AddForce(-gravityFeltVector);
+                }
+            }
+        }
+    }
 
     void UpdatePosition()
     { // Sum the forces nad clear the list
